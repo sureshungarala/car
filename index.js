@@ -2,21 +2,25 @@ let canvas = document.getElementById('road'),
     context = canvas.getContext('2d'),
     starBlank = document.createElement("img"),
     starFilled = document.createElement("img");
+
 canvas.height = window.innerHeight;
-let brickInterval,  //interval at which, bricks fall randomly
-    latestBrickLevel = 0,   //brick_level_counter to position bricks(vertically)
+context.fillStyle = '#ffffff';  //setting text fill color
+
+let latestBrickLevel = 0,   //brick_level_counter to position bricks(vertically)
     initBrickMargin = 0,    //initial top margin for brick
     score = 0,  //game score
-    brickFallInterval = 1000;   //interval at which bricks are thrown
+    brickFallInterval = 1000,   //interval at which bricks are thrown
+    brickInterval;  //promise interval to unregister
+
 let pauseInterval = false,  // handles pausing Interval on arrow keys
     gameLost = false;   //if game lost
+
 const width = canvas.width, //canvas' width
     height = canvas.height, //canvas' height
     noOfLanes = 4, //fixed no. of lanes
     carMargin = 25, //assumed margin for car, since 400px is fixed
     carPadding = 5; //assumed padding between car and nearest brick inthe same lane
 
-context.fillStyle = '#ffffff';  //setting text fill color
 const car = {   //car init object
     img: document.createElement("img"),
     width: 0,
@@ -31,13 +35,16 @@ const car = {   //car init object
         width: 0,
         height: 0
     };
+
 car.img.src = 'assets/car.png';
 brick.img.src = 'assets/brick.png';
 starBlank.src = 'assets/star_white.png';
 starFilled.src = 'assets/star_yellow.png';
+
 let lanes = [   //bricks data in 4 lanes
     [], [], [], []
 ];
+
 window.onload = function () {   //wait for images to get loaded
     car.width = car.img.width / 2;
     car.height = car.img.height / 2;
@@ -70,35 +77,10 @@ document.addEventListener('keydown', (event) => {   //listening for arrow , ente
     }
 });
 
-function draw() {   //redraw canvas and it' components
-    context.clearRect(0, 0, width, height); //clear canvas before redrawing
-    drawCar();
-    drawBricks();
-    drawScore();
-    showStarRating();
-    //changing brickFallInterval to speedup the brick fall as scroe go up
-    let tempBrickFallInterval = brickFallInterval;
-    if(score < 20){
-        brickFallInterval = 1000;
-    }else if (score >= 20 && score < 30) {
-        brickFallInterval = 900;
-    } else if (score >= 30 && score < 40) {
-        brickFallInterval = 800;
-    } else if (score >= 40 && score < 50) {
-        brickFallInterval = 700;
-    } else if (score >= 50 && score < 60) {
-        brickFallInterval = 600;
-    } else {
-        brickFallInterval = 500;
-    }
-    if (tempBrickFallInterval !== brickFallInterval) {
-        cancelInterval();
-        blocklanes();
-    }
-}
 function drawCar() {    //draw car image on canvas
     context.drawImage(car.img, car.position.x, car.position.y, car.width, car.height);
 }
+
 function drawBricks() { //draw bricks on canvas w.r.to their positions
     for (let lane of lanes) {
         for (let block of lane) {
@@ -126,16 +108,46 @@ function drawBricks() { //draw bricks on canvas w.r.to their positions
         }
     }
 }
+
 function drawScore() {  //draw the score on canvas
     context.font = '20px sans-serif';
     context.fillText('Score: ' + score, 310, 25);
-    context.fillText('Speed: '+ ((1000-brickFallInterval)/10 + 40) + ' units', 140, 25);  //shows speed in units(brickFallInterval)...starting with 40
+    context.fillText('Speed: ' + ((1000 - brickFallInterval) / 10 + 40) + ' units', 140, 25);  //shows speed in units(brickFallInterval)...starting with 40
 }
+
 function GameSummary() {    //If lost, draw summary message
     context.font = '18px sans-serif';
     context.fillText('Ouch!...Bad luck. Try Again :) with Space bar.', 20, height / 2);
     context.fillText('Reach for the STARS! on road.', 80, height / 2 + 20);
 }
+
+function draw() {   //redraw canvas and it' components
+    context.clearRect(0, 0, width, height); //clear canvas before redrawing
+    drawCar();
+    drawBricks();
+    drawScore();
+    showStarRating();
+    //changing brickFallInterval to speedup the brick fall as scroe go up
+    let tempBrickFallInterval = brickFallInterval;
+    if (score < 20) {
+        brickFallInterval = 1000;
+    } else if (score >= 20 && score < 30) {
+        brickFallInterval = 900;
+    } else if (score >= 30 && score < 40) {
+        brickFallInterval = 800;
+    } else if (score >= 40 && score < 50) {
+        brickFallInterval = 700;
+    } else if (score >= 50 && score < 60) {
+        brickFallInterval = 600;
+    } else {
+        brickFallInterval = 500;
+    }
+    if (tempBrickFallInterval !== brickFallInterval) {
+        cancelInterval();
+        blocklanes();
+    }
+}
+
 function blocklanes() { //throws brick in a random lane
     brickInterval = window.setInterval(() => {
         if (!pauseInterval) {
@@ -180,9 +192,11 @@ function showStarRating() { //shows rating based on score
 
 
 }
+
 function cancelInterval() { //stop interval when game is lost
     window.clearInterval(brickInterval);
 }
+
 document.querySelector('button').addEventListener('click', () => {  //for debugging
     cancelInterval();
 });
