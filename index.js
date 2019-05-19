@@ -129,7 +129,7 @@ function drawBricks() { //draw bricks on canvas w.r.to their positions
 function drawScore() {  //draw the score on canvas
     context.font = '20px sans-serif';
     context.fillText('Score: ' + score, 310, 25);
-    context.fillText('Speed: '+ (1000-brickFallInterval) + ' units', 140, 25);  //shows speed in units(brickFallInterval)
+    context.fillText('Speed: '+ ((1000-brickFallInterval)/10 + 40) + ' units', 140, 25);  //shows speed in units(brickFallInterval)...starting with 40
 }
 function GameSummary() {    //If lost, draw summary message
     context.font = '18px sans-serif';
