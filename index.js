@@ -1,15 +1,17 @@
 let canvas = document.getElementById('road'),
-    context = canvas.getContext('2d');
+    context = canvas.getContext('2d'),
+    starBlank = document.createElement("img"),
+    starFilled = document.createElement("img");
 canvas.height = window.innerHeight;
 let brickInterval,  //interval at which, bricks fall randomly
     latestBrickLevel = 0,   //brick_level_counter to position bricks(vertically)
     initBrickMargin = 0,    //initial top margin for brick
-    score = 0;  //game score
+    score = 0,  //game score
+    brickFallInterval = 1000;   //interval at which bricks are thrown
 let pauseInterval = false,  // handles pausing Interval on arrow keys
     gameLost = false;   //if game lost
 const width = canvas.width, //canvas' width
     height = canvas.height, //canvas' height
-    brickFallInterval = 1000,   //interval at which bricks are thrown
     noOfLanes = 4, //fixed no. of lanes
     carMargin = 25, //assumed margin for car, since 400px is fixed
     carPadding = 5; //assumed padding between car and nearest brick inthe same lane
@@ -31,6 +33,8 @@ const car = {   //car init object
     };
 car.img.src = 'assets/car.png';
 brick.img.src = 'assets/brick.png';
+starBlank.src = 'assets/star_white.png';
+starFilled.src = 'assets/star_yellow.png';
 let lanes = [   //bricks data in 4 lanes
     [], [], [], []
 ];
@@ -71,6 +75,26 @@ function draw() {   //redraw canvas and it' components
     drawCar();
     drawBricks();
     drawScore();
+    showStarRating();
+    //changing brickFallInterval to speedup the brick fall as scroe go up
+    let tempBrickFallInterval = brickFallInterval;
+    if(score < 20){
+        brickFallInterval = 1000;
+    }else if (score >= 20 && score < 30) {
+        brickFallInterval = 900;
+    } else if (score >= 30 && score < 40) {
+        brickFallInterval = 800;
+    } else if (score >= 40 && score < 50) {
+        brickFallInterval = 700;
+    } else if (score >= 50 && score < 60) {
+        brickFallInterval = 600;
+    } else {
+        brickFallInterval = 500;
+    }
+    if (tempBrickFallInterval !== brickFallInterval) {
+        cancelInterval();
+        blocklanes();
+    }
 }
 function drawCar() {    //draw car image on canvas
     context.drawImage(car.img, car.position.x, car.position.y, car.width, car.height);
@@ -105,10 +129,12 @@ function drawBricks() { //draw bricks on canvas w.r.to their positions
 function drawScore() {  //draw the score on canvas
     context.font = '20px sans-serif';
     context.fillText('Score: ' + score, 310, 25);
+    context.fillText('Speed: '+ (1000-brickFallInterval) + ' units', 140, 25);  //shows speed in units(brickFallInterval)
 }
 function GameSummary() {    //If lost, draw summary message
     context.font = '18px sans-serif';
-    context.fillText('Ouch!...Bad luck. Try Again :) with Space bar', 20, height / 2);
+    context.fillText('Ouch!...Bad luck. Try Again :) with Space bar.', 20, height / 2);
+    context.fillText('Reach for the STARS! on road.', 80, height / 2 + 20);
 }
 function blocklanes() { //throws brick in a random lane
     brickInterval = window.setInterval(() => {
@@ -122,6 +148,37 @@ function blocklanes() { //throws brick in a random lane
             draw();
         }
     }, brickFallInterval);
+
+}
+
+function showStarRating() { //shows rating based on score
+    if (score < 20) {
+        for (let i = 0; i < 5; i++) {
+            context.drawImage(starBlank, 20 * i, 10, 25, 25);
+        }
+    } else if (score >= 20 && score < 30) {
+        for (let i = 0; i < 5; i++) {
+            context.drawImage(i > 0 ? starBlank : starFilled, 20 * i, 10, 25, 25);
+        }
+    } else if (score >= 30 && score < 40) {
+        for (let i = 0; i < 5; i++) {
+            context.drawImage(i > 1 ? starBlank : starFilled, 20 * i, 10, 25, 25);
+        }
+    } else if (score >= 40 && score < 50) {
+        for (let i = 0; i < 5; i++) {
+            context.drawImage(i > 2 ? starBlank : starFilled, 20 * i, 10, 25, 25);
+        }
+    } else if (score >= 50 && score < 60) {
+        for (let i = 0; i < 5; i++) {
+            context.drawImage(i > 3 ? starBlank : starFilled, 20 * i, 10, 25, 25);
+        }
+    } else {
+        for (let i = 0; i < 5; i++) {
+            context.drawImage(starFilled, 20 * i, 10, 25, 25);
+        }
+    }
+
+
 }
 function cancelInterval() { //stop interval when game is lost
     window.clearInterval(brickInterval);
