@@ -1,110 +1,131 @@
 let canvas = document.getElementById('road'),
     context = canvas.getContext('2d');
-let brickInterval, latestBrickLevel = 0, initBrickMargin = 0, score = 0;
-let pauseInterval = false, gameLost = false;
-const width = canvas.width, height = canvas.height, noOfLanes = 4, carMargin = 25, carPadding = 5;
-const car = {
+canvas.height = window.innerHeight;
+let brickInterval,  //interval at which, bricks fall randomly
+    latestBrickLevel = 0,   //brick_level_counter to position bricks(vertically)
+    initBrickMargin = 0,    //initial top margin for brick
+    score = 0;  //game score
+let pauseInterval = false,  // handles pausing Interval on arrow keys
+    gameLost = false;   //if game lost
+const width = canvas.width, //canvas' width
+    height = canvas.height, //canvas' height
+    brickFallInterval = 1000,   //interval at which bricks are thrown
+    noOfLanes = 4, //fixed no. of lanes
+    carMargin = 25, //assumed margin for car, since 400px is fixed
+    carPadding = 5; //assumed padding between car and nearest brick inthe same lane
+
+context.fillStyle = '#ffffff';  //setting text fill color
+const car = {   //car init object
     img: document.createElement("img"),
     width: 0,
     height: 0,
-    position: {
+    position: { //car init position
         x: carMargin,
         y: height - carMargin
     }
 },
-    brick = {
+    brick = {   //brick init object
         img: document.createElement('img'),
         width: 0,
         height: 0
     };
 car.img.src = 'assets/car.png';
 brick.img.src = 'assets/brick.png';
-let lanes = [
+let lanes = [   //bricks data in 4 lanes
     [], [], [], []
 ];
-window.onload = function () {
+window.onload = function () {   //wait for images to get loaded
     car.width = car.img.width / 2;
     car.height = car.img.height / 2;
     car.position.y -= car.height;
-    drawCar();
-    brick.width = car.width;
+    brick.width = car.width;    //setting brick width same as car'
     brick.height = car.width;
-    let jumpPixels = (height - carMargin - carPadding) / (car.height + brick.height);
-    initBrickMargin = (car.height + brick.height) * (jumpPixels - Math.floor(jumpPixels));
-    blocklanes();
+    let jumpPixels = (height - carMargin - carPadding) / (car.height + brick.height);   //calculating required pixels to jump vertically w.r.t canvas height
+    initBrickMargin = (car.height + brick.height) * (jumpPixels - Math.floor(jumpPixels));  //setting initBrickMargin equal to left out jumpPixels
+    blocklanes();   //start throwing bricks
 }
 
-document.addEventListener('keydown', (event) => {
+document.addEventListener('keydown', (event) => {   //listening for arrow , enter and space keys
     if (event.key === 'Right' || event.key === 'ArrowRight') {
-        if (car.position.x + 100 < width) {
+        if (car.position.x + 100 < width) { //move only if it is with in the canvas
             pauseInterval = true;
-            car.position.x += 100;
+            car.position.x += 100;  //car' next X-position
             draw();
-            pauseInterval = false;
+            pauseInterval = false;  //pausing bricks' rendering to avoid race condition.
         }
-        console.log('right key');
-    } else if (event.key === 'Left' || event.key === 'ArrowLeft') {
+    } else if (event.key === 'Left' || event.key === 'ArrowLeft') { //move only if it is with in the canvas
         if (car.position.x - 100 > 0) {
             pauseInterval = true;
             car.position.x -= 100;
             draw();
             pauseInterval = false;
         }
-        console.log('left key');
-    } else if (gameLost && (event.key === ' ' || event.code === 'Space')) {
+    } else if (gameLost && (event.key === ' ' || event.code === 'Space' || event.key === 'Enter' || event.code === 'Enter')) {
+        //reload only if game lost
         document.location.reload();
     }
 });
 
-function draw() {
-    context.clearRect(0, 0, width, height);
+function draw() {   //redraw canvas and it' components
+    context.clearRect(0, 0, width, height); //clear canvas before redrawing
     drawCar();
     drawBricks();
     drawScore();
 }
-function drawCar() {
+function drawCar() {    //draw car image on canvas
     context.drawImage(car.img, car.position.x, car.position.y, car.width, car.height);
 }
-function drawBricks() {
+function drawBricks() { //draw bricks on canvas w.r.to their positions
     for (let lane of lanes) {
         for (let block of lane) {
+            //setting brick's Y position based on brickLevel(counter) value further avoiding unneccesary looping
+            //adding `car.height`, as gamer should be able to move car between the bricks (inter lanes).
+            //`blockY` represents Y-position for the brick
             let blockY = (latestBrickLevel - block.brickLevel) * (car.height + brick.height) + initBrickMargin;
-            if (blockY < height) {
+            if (blockY < height) {  //only render if it is inside the canvas
+                //retaining bottom padding for the car
                 blockY = (blockY > car.position.y && blockY + 2 * carPadding < height) ? blockY + 2 * carPadding : blockY;
+                //when brick hits(crosees) before gamer turns(arrow keys)
                 if (blockY > car.position.y + car.height && !pauseInterval) {
-                    score++;
-                    if (block.x === car.position.x) {
+                    if (block.x === car.position.x) {   //same lane...so, game lost
                         gameLost = true;
                         cancelInterval();
-                        alert('GAME OVER!');
+                        GameSummary();
+                        //alert('GAME OVER!'); or return;
                     }
+                    score++;
                 }
-                context.drawImage(brick.img, block.x, blockY, brick.width, brick.height);
+                context.drawImage(brick.img, block.x, blockY, brick.width, brick.height);   //draw the brick
+            } else {
+                break;  // break the loop if current brick already passed canvas as, further bricks in this lane has greater `brickLevel` value ('unshift'ed in lane)
             }
         }
     }
 }
-function drawScore() {
-    context.font = '18px sans-serif';
-    context.fillStyle = '#ffffff';
+function drawScore() {  //draw the score on canvas
+    context.font = '20px sans-serif';
     context.fillText('Score: ' + score, 310, 25);
 }
-function blocklanes() {
+function GameSummary() {    //If lost, draw summary message
+    context.font = '18px sans-serif';
+    context.fillText('Ouch!...Bad luck. Try Again :) with Space bar', 20, height / 2);
+}
+function blocklanes() { //throws brick in a random lane
     brickInterval = window.setInterval(() => {
         if (!pauseInterval) {
-            let laneIndex = Math.floor(Math.random() * noOfLanes),
+            let laneIndex = Math.floor(Math.random() * noOfLanes),  //selecting random lane
                 lane = lanes[laneIndex];
-            lanes[laneIndex].unshift({
-                x: lane[lane.length - 1] ? lane[lane.length - 1].x : laneIndex * 100 + carMargin,
-                brickLevel: ++latestBrickLevel
+            lanes[laneIndex].unshift({  //adding from the head to avoid looping whole array(excluding bricks which left canvas already)
+                x: lane[lane.length - 1] ? lane[lane.length - 1].x : laneIndex * 100 + carMargin,   //aligning brick with car
+                brickLevel: ++latestBrickLevel  //counter to track brickleve...later used in positioning them
             });
             draw();
         }
-    }, 1000);
+    }, brickFallInterval);
 }
-function cancelInterval() {
+function cancelInterval() { //stop interval when game is lost
     window.clearInterval(brickInterval);
 }
-document.querySelector('button').addEventListener('click', () => {
+document.querySelector('button').addEventListener('click', () => {  //for debugging
     cancelInterval();
 });

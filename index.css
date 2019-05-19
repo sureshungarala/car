@@ -1,3 +1,7 @@
+* {
+  margin-top: 10px;
+  padding: 0;
+}
 #road {
   background-image: url("./assets/road.png");
   width: 400px;
@@ -6,4 +10,14 @@
   background-size: contain;
   display: block;
   margin: 0 auto;
+}
+#status {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 700px;
+  margin: 0 auto;
+  opacity: 0.8;
 }
