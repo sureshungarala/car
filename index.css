@@ -1,0 +1,9 @@
+#road {
+  background-image: url("./assets/road.png");
+  width: 400px;
+  max-height: 700px;
+  background-repeat: repeat-y;
+  background-size: contain;
+  display: block;
+  margin: 0 auto;
+}
